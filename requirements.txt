@@ -1,0 +1,48 @@
+List of requirements: 
+
+MVP: 
+- assignment
+- basic arithmetic operations
+    - addition
+    - subtraction
+    - multiplication
+    - division
+    - mod
+    - increment
+    - decrement
+
+- flow control - it else
+- loops while(maybe for(maybe combine them like in golang))
+- print() function 
+- functions
+- main function
+- structs
+
+Nice to have:
+- multiline comments
+- basic binary operations
+
+
+Advanced requirements:
+- grouped switch cases(PASCAL)
+- type inference (golang := operator) 
+- native strings as types
+- double/float types
+- array types
+- type casts
+
+
+Types:
+- int
+- bool
+- float/double - ADVANCED
+- string - ADVANCED
+- char - ADVANCED
+- array - ADVANCED
+- struct - ADVANCED
+
+Name 
+- Eclectic
+- Mashup
+
+
