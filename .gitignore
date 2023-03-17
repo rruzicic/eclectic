@@ -1,4 +1,5 @@
 *.yy.c
 *.tab.h
 *.tab.c
+*.output
 text

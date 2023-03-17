@@ -12,25 +12,25 @@ extern int yylineno;
 %token ASSIGN_PLUS
 %token ASSIGN_MINUS
 
-%token CURLY_LEFT
-%token CURLY_RIGHT
+%token LEFT_CURLY
+%token RIGHT_CURLY
 
-%token PLUS
-%token MINUS
-%token MUL
-%token DIV
-%token MOD
+%token PLUS_OP
+%token MINUS_OP
+%token MUL_OP
+%token DIV_OP
+%token MOD_OP
 
-%token EQ
-%token NOT_EQ
-%token GT
-%token LT
-%token GTE
-%token LTE
+%token EQ_OP
+%token NEQ_OP
+%token GT_OP
+%token LT_OP
+%token GTE_OP
+%token LTE_OP
 
-%token AND
-%token OR
-%token NOT
+%token AND_OP
+%token OR_OP
+%token NOT_OP
 
 %token IF
 %token ELSE
@@ -38,14 +38,169 @@ extern int yylineno;
 %token FUNC
 %token PRINT
 
+%token GLOBAL
+%token INT
+
+%token LEFT_PAREN
+%token RIGHT_PAREN
+
+%token COMMA
+%token ID
+%token RETURN
+
+%token INT_NUM
+
+
 %%
-func : FUNC;
+
+program 
+  : global_var_list function_list
+  ;
+
+global_var_list
+  :
+  | global_var_declaration
+  | global_var_list global_var_declaration
+  ;
+
+global_var_declaration :
+  GLOBAL type ID
+  ;
+
+type
+  : INT
+  ;
+
+function_list
+  : function
+  | function_list function
+  ;
+
+function
+  : FUNC ID LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY function_body RIGHT_CURLY
+  ;
+
+function_params
+  :
+  | type ID 
+  | function_params COMMA type ID 
+  ;
+
+function_return_type
+  :
+  | type
+  ;
+
+function_body
+  : 
+  | function_body statement
+  ;
+
+statement 
+  : var_declaration
+  | assign_statement
+  | print_statement
+  | return_statement
+  | function_call
+  //| if_statement
+  //| while_statement
+  ;
+
+var_declaration
+  : type ID
+  // inference goes here
+  ;
+
+assign_statement 
+  : ID ASSIGN expression
+  ;
+
+print_statement
+  : PRINT LEFT_PAREN expression RIGHT_PAREN
+  ;
+
+function_call
+  : ID LEFT_PAREN function_call_params RIGHT_PAREN
+  ;
+
+function_call_params
+  :
+  | expression
+  | function_call_params COMMA expression 
+  ;
+
+expression
+  : assignment_expression
+  ;
+
+assignment_expression 
+  : conditional_expression
+  | ID ASSIGN assignment_expression
+  ;
+
+conditional_expression
+  : logical_or_expression
+  ;
+
+logical_or_expression 
+  : logical_and_expression
+  | logical_or_expression OR_OP logical_and_expression
+  ;
+
+logical_and_expression 
+  : equality_expression
+  | logical_and_expression AND_OP equality_expression
+  ;
+
+equality_expression
+  : relational_expression
+  | equality_expression EQ_OP relational_expression
+  | equality_expression NEQ_OP relational_expression
+  ;
+
+relational_expression
+  : additive_expression
+  | relational_expression LT_OP additive_expression
+  | relational_expression GT_OP additive_expression
+  | relational_expression LTE_OP additive_expression
+  | relational_expression GTE_OP additive_expression
+  ;
+
+additive_expression
+  : multiplicative_expression
+  | additive_expression PLUS_OP multiplicative_expression
+  | additive_expression MINUS_OP multiplicative_expression
+  ;
+
+multiplicative_expression
+  : primary_expression
+  | multiplicative_expression MUL_OP primary_expression
+  | multiplicative_expression DIV_OP primary_expression
+  | multiplicative_expression MOD_OP primary_expression
+  ;
+
+primary_expression
+  : ID
+  | literal
+  | LEFT_PAREN expression RIGHT_PAREN
+  ;
+
+literal  
+  : INT_NUM
+  ;
+
+return_statement
+  : RETURN expression 
+  ;
+
 %%
 
 
 int main() {
-    yyparse();
+  yyparse();
 }
 int yyerror(char *s) {
-  fprintf(stderr, "line %d: SYNTAX ERROR %s\n", yylineno, s);
-} 
+  fprintf(stderr, "\nline %d: ERROR: %s\n", yylineno, s);
+  return 0;
+}
+
