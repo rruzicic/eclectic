@@ -1,0 +1,11 @@
+global int pera
+
+func mul(int a, int b) {
+    return a * b
+}
+
+func main(int p) {
+    int a = 5
+    int b = 8
+    print(mul(a, b))
+}

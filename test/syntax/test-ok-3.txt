@@ -3,5 +3,10 @@ global int pera
 func pera(int p, int a, int b) {
     int a
     a = 5 + 2 / 3 and 5 
+}
 
+func main(int p) {
+    int a = 5
+    int b = 8
+    print(a + b)
 }

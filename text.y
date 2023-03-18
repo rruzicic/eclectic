@@ -197,7 +197,8 @@ return_statement
 
 
 int main() {
-  yyparse();
+  //TODO: different returns based on warn or err count
+  return yyparse();
 }
 int yyerror(char *s) {
   fprintf(stderr, "\nline %d: ERROR: %s\n", yylineno, s);

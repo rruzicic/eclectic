@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 SRC = text
 .PHONY: clean
 
