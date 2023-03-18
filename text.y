@@ -14,6 +14,9 @@ extern int yylineno;
 
 %token LEFT_CURLY
 %token RIGHT_CURLY
+%token LEFT_PAREN
+%token RIGHT_PAREN
+%token COMMA
 
 %token PLUS_OP
 %token MINUS_OP
@@ -32,23 +35,20 @@ extern int yylineno;
 %token OR_OP
 %token NOT_OP
 
+%token INT
+
 %token IF
 %token ELSE
 %token WHILE
 %token FUNC
 %token PRINT
-
-%token GLOBAL
-%token INT
-
-%token LEFT_PAREN
-%token RIGHT_PAREN
-
-%token COMMA
-%token ID
 %token RETURN
+%token GLOBAL
 
 %token INT_NUM
+
+%token ID
+
 
 
 %%
