@@ -108,6 +108,7 @@ statement
 
 var_declaration
   : type ID
+  | type ID ASSIGN expression
   // inference goes here
   ;
 
@@ -182,6 +183,7 @@ multiplicative_expression
 primary_expression
   : ID
   | literal
+  | function_call
   | LEFT_PAREN expression RIGHT_PAREN
   ;
 
