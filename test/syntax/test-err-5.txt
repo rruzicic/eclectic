@@ -1,0 +1,3 @@
+func main() {
+    while a > 10 {
+}

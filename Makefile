@@ -15,4 +15,5 @@ clean:
 	rm -f lex.yy.c
 	rm -f $(SRC).tab.c
 	rm -f $(SRC).tab.h
+	rm -f $(SRC).output
 	rm -f $(SRC)

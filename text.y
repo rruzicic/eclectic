@@ -103,7 +103,11 @@ statement
   | return_statement
   | function_call
   | if_statement
-  //| while_statement
+  | while_statement
+  ;
+
+while_statement
+  : WHILE expression LEFT_CURLY statement_list RIGHT_CURLY
   ;
 
 if_statement 
@@ -115,7 +119,6 @@ if_statement
 var_declaration
   : type ID
   | type ID ASSIGN expression
-  // inference goes here
   ;
 
 assign_statement 
@@ -136,13 +139,19 @@ function_call_params
   | function_call_params COMMA expression 
   ;
 
+assignment_operators
+  : ASSIGN
+  | ASSIGN_PLUS
+  | ASSIGN_MINUS
+  ;
+
 expression
   : assignment_expression
   ;
 
 assignment_expression 
   : conditional_expression
-  | ID ASSIGN assignment_expression
+  | ID assignment_operators assignment_expression
   ;
 
 conditional_expression
@@ -160,9 +169,14 @@ logical_and_expression
   ;
 
 equality_expression
+  : unary_expression
+  | equality_expression EQ_OP unary_expression
+  | equality_expression NEQ_OP unary_expression
+  ;
+
+unary_expression
   : relational_expression
-  | equality_expression EQ_OP relational_expression
-  | equality_expression NEQ_OP relational_expression
+  | NOT_OP relational_expression 
   ;
 
 relational_expression
