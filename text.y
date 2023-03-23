@@ -77,7 +77,7 @@ function_list
   ;
 
 function
-  : FUNC ID LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY function_body RIGHT_CURLY
+  : FUNC ID LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY statement_list RIGHT_CURLY
   ;
 
 function_params
@@ -91,9 +91,9 @@ function_return_type
   | type
   ;
 
-function_body
+statement_list
   : 
-  | function_body statement
+  | statement_list statement
   ;
 
 statement 
@@ -102,9 +102,15 @@ statement
   | print_statement
   | return_statement
   | function_call
-  //| if_statement
+  | if_statement
   //| while_statement
   ;
+
+if_statement 
+  : IF expression LEFT_CURLY statement_list RIGHT_CURLY
+  | IF expression LEFT_CURLY statement_list RIGHT_CURLY ELSE LEFT_CURLY statement_list RIGHT_CURLY
+  | IF expression LEFT_CURLY statement_list RIGHT_CURLY ELSE if_statement
+  ; 
 
 var_declaration
   : type ID
