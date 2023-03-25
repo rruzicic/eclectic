@@ -36,6 +36,7 @@ extern int yylineno;
 %token NOT_OP
 
 %token INT
+%token BOOL
 
 %token IF
 %token ELSE
@@ -44,6 +45,9 @@ extern int yylineno;
 %token PRINT
 %token RETURN
 %token GLOBAL
+
+%token TRUE_VAL
+%token FALSE_VAL
 
 %token INT_NUM
 
@@ -69,6 +73,7 @@ global_var_declaration :
 
 type
   : INT
+  | BOOL
   ;
 
 function_list
@@ -209,6 +214,8 @@ primary_expression
 
 literal  
   : INT_NUM
+  | TRUE_VAL
+  | FALSE_VAL
   ;
 
 return_statement

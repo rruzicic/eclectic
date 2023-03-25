@@ -37,6 +37,8 @@
 
 
 "int"                       { printf("INT\n"); return INT; } 
+"bool"                      { printf("BOOL\n"); return BOOL; } 
+
 
 "if"                        { printf("IF\n"); return IF; } 
 "else"                      { printf("ELSE\n"); return ELSE; } 
@@ -45,6 +47,9 @@
 "print"                     { printf("PRINT\n"); return PRINT; } 
 "return"                    { printf("RETURN\n"); return RETURN;}
 "global"                    { printf("GLOBAL\n"); return GLOBAL; }
+
+"true"                      { printf("TRUE_VAL\n"); return TRUE_VAL; }
+"false"                     { printf("FALSE_VAL\n"); return FALSE_VAL; }
 
 [0-9]{1,20}                 { printf("INT_NUM\n"); return INT_NUM; }
 
