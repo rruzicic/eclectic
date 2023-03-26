@@ -2,7 +2,7 @@ SHELL = /bin/bash
 SRC = text
 .PHONY: clean
 
-$(SRC): lex.yy.c $(SRC).tab.c
+$(SRC): defs.h lex.yy.c $(SRC).tab.c symtab.c symtab.h
 	gcc -o $@ $+
 
 lex.yy.c: $(SRC).l $(SRC).tab.c

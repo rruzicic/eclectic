@@ -1,11 +1,26 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include "symtab.h"
+#include "defs.h"
 int yylex(void);
 int yyparse(void);
 int yyerror(char *);
+void warning(char *s);
+
+char char_buffer[CHAR_BUFFER_LENGTH];
+
 extern int yylineno;
+int err_cnt = 0;
+int warn_cnt = 0;
+
 
 %}
+
+%union {
+  int i;
+  char *s;
+}
 
 
 %token ASSIGN
@@ -49,9 +64,11 @@ extern int yylineno;
 %token TRUE_VAL
 %token FALSE_VAL
 
-%token INT_NUM
+%token <s> INT_NUM
 
-%token ID
+%token <s> ID
+
+%type <i> literal type
 
 
 
@@ -67,13 +84,13 @@ global_var_list
   | global_var_list global_var_declaration
   ;
 
-global_var_declaration :
-  GLOBAL type ID
+global_var_declaration 
+  : GLOBAL type ID
   ;
 
 type
-  : INT
-  | BOOL
+  : INT { $$ = INT_TYPE; }
+  | BOOL { $$ = BOOL_TYPE; }
   ;
 
 function_list
@@ -122,8 +139,16 @@ if_statement
   ; 
 
 var_declaration
-  : type ID
-  | type ID ASSIGN expression
+  : type ID {
+    if (lookup($2, VAR|PAR|GVAR) == -1) {
+      insert_row($2, VAR, $1);
+    } else {
+      err("variable/parameter with that name already exists");
+    }
+  }
+  | type ID ASSIGN expression {
+
+  }
   ;
 
 assign_statement 
@@ -206,17 +231,29 @@ multiplicative_expression
   ;
 
 primary_expression
-  : ID
-  | literal
+  : ID {
+
+  }
+  | literal {
+
+  }
   | function_call
   | LEFT_PAREN expression RIGHT_PAREN
   ;
 
 literal  
-  : INT_NUM
-  | TRUE_VAL
-  | FALSE_VAL
+  : INT_NUM {
+    $$ = 1;
+  }
+  | boolean_literal {
+    $$ = 2;
+  }
   ;
+
+boolean_literal
+  : TRUE_VAL
+  | FALSE_VAL
+  ;  
 
 return_statement
   : RETURN expression 
@@ -226,6 +263,7 @@ return_statement
 
 
 int main() {
+  init_symtab();
   //TODO: different returns based on warn or err count
   return yyparse();
 }
@@ -234,3 +272,7 @@ int yyerror(char *s) {
   return 0;
 }
 
+void warning(char *s) {
+  fprintf(stderr, "\nline %d: WARNING: %s", yylineno, s);
+  warn_cnt++;
+}

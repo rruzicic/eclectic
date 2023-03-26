@@ -1,6 +1,8 @@
 %option noyywrap yylineno
 %{
+    #include <string.h>
     #include "text.tab.h"
+    extern YYSTYPE yylval;
 %}
 
 %%
@@ -51,9 +53,9 @@
 "true"                      { printf("TRUE_VAL\n"); return TRUE_VAL; }
 "false"                     { printf("FALSE_VAL\n"); return FALSE_VAL; }
 
-[0-9]{1,20}                 { printf("INT_NUM\n"); return INT_NUM; }
+[0-9]{1,20}                 { yylval.s = strdup(yytext); printf("INT_NUM\n"); return INT_NUM; }
 
-[a-zA-Z][a-zA-Z0-9]{0,30}   { printf("ID\n"); return ID; }
+[a-zA-Z][a-zA-Z0-9]{0,30}   { yylval.s = strdup(yytext); printf("ID\n"); return ID; }
 
 \/\/.*                      { printf("COMMENT\n"); }
 
