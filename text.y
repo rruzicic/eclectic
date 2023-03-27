@@ -257,8 +257,12 @@ logical_and_expression
 
 equality_expression
   : unary_expression { $$ = $1; }
-  | equality_expression EQ_OP unary_expression // check types
-  | equality_expression NEQ_OP unary_expression
+  | equality_expression equality_operator unary_expression // check types
+  ;
+
+equality_operator
+  : EQ_OP
+  | NEQ_OP
   ;
 
 unary_expression
@@ -268,16 +272,24 @@ unary_expression
 
 relational_expression
   : additive_expression { $$ = $1; }
-  | relational_expression LT_OP additive_expression 
-  | relational_expression GT_OP additive_expression
-  | relational_expression LTE_OP additive_expression
-  | relational_expression GTE_OP additive_expression
+  | relational_expression relational_operator additive_expression
+  ;
+
+relational_operator
+  : LT_OP
+  | GT_OP
+  | LTE_OP
+  | GTE_OP
   ;
 
 additive_expression
   : multiplicative_expression { $$ = $1; }
-  | additive_expression PLUS_OP multiplicative_expression
-  | additive_expression MINUS_OP multiplicative_expression
+  | additive_expression additive_operator multiplicative_expression {}
+  ;
+
+additive_operator
+  : PLUS_OP
+  | MINUS_OP
   ;
 
 multiplicative_expression
