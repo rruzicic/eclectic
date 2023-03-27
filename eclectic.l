@@ -1,7 +1,7 @@
 %option noyywrap yylineno
 %{
     #include <string.h>
-    #include "text.tab.h"
+    #include "eclectic.tab.h"
     extern YYSTYPE yylval;
 %}
 

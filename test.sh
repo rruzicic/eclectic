@@ -1,6 +1,7 @@
 #!/bin/bash
 
 TEST_DIR=test
+SRC=eclectic
 
 # expand for more test types here and in switch case
 TEST_GROUPS_DEFAULT=(syntax semantic)
@@ -45,7 +46,7 @@ for test_group_idx in ${!TEST_GROUPS[@]}; do
                 continue
             fi
             return_value=${TEST_TYPES_RETURNS[$test_type_idx]}            
-            ./text < $file 1>/dev/null 2>/dev/null
+            ./$SRC < $file 1>/dev/null 2>/dev/null
             if [ $? -eq $return_value ]
             then
                 echo -e "[\033[92mPASSED\033[0m] $file"

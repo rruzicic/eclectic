@@ -247,7 +247,13 @@ conditional_expression
 
 logical_or_expression 
   : logical_and_expression { $$ = $1; }
-  | logical_or_expression OR_OP logical_and_expression // check types
+  | logical_or_expression OR_OP logical_and_expression {
+    if ($1 == BOOL_TYPE && $1 == $3) {
+      err("could not apply || operator to given operands");
+    } else {
+      $$ = $1;
+    }
+  }
   ;
 
 logical_and_expression 

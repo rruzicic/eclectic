@@ -1,5 +1,5 @@
 SHELL = /bin/bash
-SRC = text
+SRC = eclectic
 .PHONY: clean
 
 $(SRC): defs.h lex.yy.c $(SRC).tab.c symtab.c symtab.h
