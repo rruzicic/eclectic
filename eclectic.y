@@ -258,7 +258,13 @@ logical_or_expression
 
 logical_and_expression 
   : equality_expression { $$ = $1; }
-  | logical_and_expression AND_OP equality_expression // check types
+  | logical_and_expression AND_OP equality_expression {
+    if ($1 == BOOL_TYPE && $1 == $3) {
+      err("could not apply && operator to given operands");
+    } else {
+      $$ = $1;
+    }
+  }
   ;
 
 equality_expression
@@ -304,7 +310,7 @@ multiplicative_expression
     if ($1 == $3) {
       $$ = $1;
     } else {
-      err("unsupported operation between two types");
+      err("could not apply * / %% operator to given operands");
     }
   }
   ;

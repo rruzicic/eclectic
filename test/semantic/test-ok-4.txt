@@ -1,0 +1,10 @@
+func foo(int a, bool b) {
+    print(a)
+    print(b)
+}
+
+func main() {
+    int a = 1
+    bool b = true
+    foo(a, b)
+}
