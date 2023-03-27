@@ -1,4 +1,5 @@
 func main() {
+    int a
     while !(a < 10) {
         print(1)
     }

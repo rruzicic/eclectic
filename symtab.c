@@ -33,6 +33,20 @@ int lookup(char *name, unsigned kind) {
   return -1;
 }
 
+unsigned get_type(unsigned index) {
+  if (index > first_empty) {
+    return NO_TYPE;
+  }
+  return symtab[index].type;
+}
+
+char* get_name(unsigned index) {
+  if (index > first_empty) {
+    return "";
+  }
+  return symtab[index].name;
+}
+
 // Deletes all rows from symbol table.
 void clear_symtab(void) {
   first_empty = SYMTAB_LENGTH - 1;
@@ -43,6 +57,7 @@ void init_symtab(void) {
   clear_symtab();
 }
 
+// Deletes all symbols in symbol table starting from begin_index all the way through to the last index in table.
 void clear_symbols(unsigned begin_index) {
   if (begin_index == first_empty)
     return;

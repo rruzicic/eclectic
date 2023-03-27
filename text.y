@@ -13,6 +13,7 @@ char char_buffer[CHAR_BUFFER_LENGTH];
 extern int yylineno;
 int err_cnt = 0;
 int warn_cnt = 0;
+int function_idx = -1;
 
 
 %}
@@ -68,9 +69,11 @@ int warn_cnt = 0;
 
 %token <s> ID
 
-%type <i> literal type
+%type <i> literal type 
+%type <i> function_call
 
-
+%type <i> expression assignment_expression conditional_expression logical_or_expression logical_and_expression
+%type <i> equality_expression unary_expression relational_expression additive_expression multiplicative_expression primary_expression
 
 %%
 
@@ -85,7 +88,13 @@ global_var_list
   ;
 
 global_var_declaration 
-  : GLOBAL type ID
+  : GLOBAL type ID {
+    if (lookup($3, GVAR) == -1) {
+      insert_row($3, GVAR, $2);
+    } else {
+      err("redefinition of global variable %s", $3);
+    }
+  }
   ;
 
 type
@@ -99,13 +108,38 @@ function_list
   ;
 
 function
-  : FUNC ID LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY statement_list RIGHT_CURLY
+  : FUNC ID {
+    if (lookup($2, FUNC_KIND) == -1) {
+      function_idx = insert_row($2, FUNC_KIND, INT_TYPE);
+    }
+    else {
+      err("function %s already declared", $2);
+    }
+  }
+  LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY statement_list RIGHT_CURLY
+  {
+    clear_symbols(function_idx + 1);
+  }
   ;
 
 function_params
   :
-  | type ID 
-  | function_params COMMA type ID 
+  | type ID {
+    if (lookup($2, PAR) == -1) {
+      insert_row($2, PAR, $1);
+    }
+    else {
+      err("redefinition of parameter %s", $2);
+    }
+  }
+  | function_params COMMA type ID {
+    if (lookup($4, PAR) == -1) {
+      insert_row($4, PAR, $3);
+    }
+    else {
+      err("redefinition of parameter %s", $4);
+    }
+  }
   ;
 
 function_return_type
@@ -147,12 +181,30 @@ var_declaration
     }
   }
   | type ID ASSIGN expression {
-
+    if ($1 != $4) {
+      err("could not assign expression to variable, mismatched types");
+    } else if (lookup($2, VAR|PAR|GVAR) == -1) {
+      insert_row($2, VAR, $1);
+    } else {
+      err("variable/parameter with that name already exists");
+    }
   }
   ;
 
 assign_statement 
-  : ID ASSIGN expression
+  : ID ASSIGN expression { 
+    int idx = lookup($1, VAR|PAR);
+    if (idx == -1) {
+      err("use of undeclared variable %s", $1);
+    } else {
+      unsigned type = get_type(idx);
+      if (type != $3) {
+        err("could not asssign expression to a variable, mismatched types");
+      } else {
+        // codegen
+      }
+    }
+   }
   ;
 
 print_statement
@@ -160,7 +212,12 @@ print_statement
   ;
 
 function_call
-  : ID LEFT_PAREN function_call_params RIGHT_PAREN
+  : ID LEFT_PAREN function_call_params RIGHT_PAREN {
+    $$ = lookup($1, FUNC_KIND); 
+    if ($$ == -1) {
+      err("call to undefined function %s", $1);
+    }
+  }
   ;
 
 function_call_params
@@ -176,77 +233,103 @@ assignment_operators
   ;
 
 expression
-  : assignment_expression
+  : assignment_expression { $$ = $1; }
   ;
 
 assignment_expression 
-  : conditional_expression
-  | ID assignment_operators assignment_expression
+  : conditional_expression { $$ = $1; }
+  | ID assignment_operators assignment_expression { $$ = $3; }
   ;
 
 conditional_expression
-  : logical_or_expression
+  : logical_or_expression { $$ = $1; }
   ;
 
 logical_or_expression 
-  : logical_and_expression
-  | logical_or_expression OR_OP logical_and_expression
+  : logical_and_expression { $$ = $1; }
+  | logical_or_expression OR_OP logical_and_expression // check types
   ;
 
 logical_and_expression 
-  : equality_expression
-  | logical_and_expression AND_OP equality_expression
+  : equality_expression { $$ = $1; }
+  | logical_and_expression AND_OP equality_expression // check types
   ;
 
 equality_expression
-  : unary_expression
-  | equality_expression EQ_OP unary_expression
+  : unary_expression { $$ = $1; }
+  | equality_expression EQ_OP unary_expression // check types
   | equality_expression NEQ_OP unary_expression
   ;
 
 unary_expression
-  : relational_expression
-  | NOT_OP relational_expression 
+  : relational_expression { $$ = $1; }
+  | NOT_OP relational_expression { $$ = $2; } // check types
   ;
 
 relational_expression
-  : additive_expression
-  | relational_expression LT_OP additive_expression
+  : additive_expression { $$ = $1; }
+  | relational_expression LT_OP additive_expression 
   | relational_expression GT_OP additive_expression
   | relational_expression LTE_OP additive_expression
   | relational_expression GTE_OP additive_expression
   ;
 
 additive_expression
-  : multiplicative_expression
+  : multiplicative_expression { $$ = $1; }
   | additive_expression PLUS_OP multiplicative_expression
   | additive_expression MINUS_OP multiplicative_expression
   ;
 
 multiplicative_expression
-  : primary_expression
-  | multiplicative_expression MUL_OP primary_expression
-  | multiplicative_expression DIV_OP primary_expression
-  | multiplicative_expression MOD_OP primary_expression
+  : primary_expression { $$ = $1; }
+  | multiplicative_expression multiplicative_operator primary_expression {
+    if ($1 == $3) {
+      $$ = $1;
+    } else {
+      err("unsupported operation between two types");
+    }
+  }
   ;
+
+multiplicative_operator 
+  : MUL_OP
+  | DIV_OP
+  | MOD_OP
+  ;  
 
 primary_expression
   : ID {
-
+    int idx = lookup($1, VAR|PAR|GVAR);
+    if (idx == -1) {
+      err("use of undefined variable %s", $1);
+    }
+    else {
+      $$ = get_type(idx);
+    }
   }
   | literal {
-
+    $$ = $1;
   }
-  | function_call
-  | LEFT_PAREN expression RIGHT_PAREN
+  | function_call {
+    int idx = $1;
+    if (idx == -1) {
+      err("call of undefined function %s", get_name($1));
+    }
+    else {
+      $$ = get_type(idx);
+    }
+  }
+  | LEFT_PAREN expression RIGHT_PAREN {
+    $$ = $2;
+  }
   ;
 
 literal  
   : INT_NUM {
-    $$ = 1;
+    $$ = INT_TYPE;
   }
   | boolean_literal {
-    $$ = 2;
+    $$ = BOOL_TYPE;
   }
   ;
 
@@ -264,7 +347,6 @@ return_statement
 
 int main() {
   init_symtab();
-  //TODO: different returns based on warn or err count
   int ret_val = yyparse();
 
   if (err_cnt != 0) {

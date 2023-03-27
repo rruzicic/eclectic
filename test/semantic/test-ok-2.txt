@@ -1,0 +1,9 @@
+func sum(int a, int b) int {
+    return a + b
+} 
+
+func main() {
+    int a = 5
+    int b = 6
+    print(sum(a, b))
+}

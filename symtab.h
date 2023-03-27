@@ -24,4 +24,8 @@ void clear_symtab(void);
 
 void clear_symbols(unsigned begin_index);
 
+unsigned get_type(unsigned idx);
+
+char* get_name(unsigned index);
+
 #endif

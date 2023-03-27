@@ -24,7 +24,7 @@ enum Type {
     NO_TYPE     = 1 << 0,
     INT_TYPE    = 1 << 1,
     BOOL_TYPE   = 1 << 2,
-    
+    VOID_TYPE   = 1 << 3, // Only for function return type.
 };
 
 #endif
