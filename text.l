@@ -59,5 +59,5 @@
 
 \/\/.*                      { printf("COMMENT\n"); }
 
-.                           { printf("\nlexical error"); }
+.                           { printf("\nlexical error"); return 1; }
 %%

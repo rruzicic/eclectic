@@ -3,11 +3,13 @@
 
 #define CHAR_BUFFER_LENGTH   128
 extern char char_buffer[CHAR_BUFFER_LENGTH];
-
+extern int err_cnt;
+extern int warn_cnt;
 extern void warning(char *s);
 extern int yyerror(char *s);
-#define err(args...)  sprintf(char_buffer, args), yyerror(char_buffer)
-#define warn(args...) sprintf(char_buffer, args), warning(char_buffer)
+
+#define err(args...)  sprintf(char_buffer, args), yyerror(char_buffer), err_cnt++
+#define warn(args...) sprintf(char_buffer, args), warning(char_buffer), warn_cnt++
 
 enum Kind {
     NO_KIND     = 1 << 0,

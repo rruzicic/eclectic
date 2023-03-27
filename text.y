@@ -265,7 +265,15 @@ return_statement
 int main() {
   init_symtab();
   //TODO: different returns based on warn or err count
-  return yyparse();
+  int ret_val = yyparse();
+
+  if (err_cnt != 0) {
+    return 1;
+  } else if (warn_cnt != 0) {
+    return 2;
+  } else {
+    return ret_val;
+  }
 }
 int yyerror(char *s) {
   fprintf(stderr, "\nline %d: ERROR: %s\n", yylineno, s);
