@@ -1,0 +1,6 @@
+func main() {
+    int a
+    /*
+    asd sdfs adfaf sdfsd sd
+    */
+}

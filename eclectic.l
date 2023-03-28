@@ -2,12 +2,16 @@
 %{
     #include <string.h>
     #include "eclectic.tab.h"
+    #include "defs.h"
     extern YYSTYPE yylval;
+
+    void comment(void);
 %}
 
 %%
 
 [ \t\n]+                    { /* skip */ }
+"/*"			            { comment(); }
 
 
 "="                         { printf("ASSIGN\n"); return ASSIGN; }
@@ -61,3 +65,15 @@
 
 .                           { printf("\nlexical error"); return 1; }
 %%
+
+void comment(void) {
+	char c, prev = 0;
+  
+	while ((c = input()) != 0)
+	{
+		if (c == '/' && prev == '*')
+			return;
+		prev = c;
+	}
+	err("unterminated comment");
+}
