@@ -2,7 +2,7 @@ global int pera
 
 func pera(int p, int b) {
     int a
-    a = 5 + 2 / 3 and 5 
+    a = 5 + 2 / 3 - 5 
 }
 
 func main(int p) {

@@ -14,7 +14,9 @@ extern int yylineno;
 int err_cnt = 0;
 int warn_cnt = 0;
 int function_idx = -1;
-
+int function_param_idx = -1;
+int function_call_param_idx = -1;
+int function_call_idx = -1;
 
 %}
 
@@ -83,7 +85,6 @@ program
 
 global_var_list
   :
-  | global_var_declaration
   | global_var_list global_var_declaration
   ;
 
@@ -109,6 +110,7 @@ function_list
 
 function
   : FUNC ID {
+    function_param_idx = 0;
     if (lookup($2, FUNC_KIND) == -1) {
       function_idx = insert_row($2, FUNC_KIND, INT_TYPE);
     }
@@ -118,27 +120,30 @@ function
   }
   LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY statement_list RIGHT_CURLY
   {
-    clear_symbols(function_idx + 1);
+    int func_param_num = get_func_param_num(function_idx);
+    clear_symbols(function_idx + func_param_num + 1);
   }
   ;
 
 function_params
   :
   | type ID {
-    if (lookup($2, PAR) == -1) {
-      insert_row($2, PAR, $1);
+    if (lookup_function_definiton_param($2, function_idx) == -1) {
+      insert_function_param($2, $1, function_idx, function_param_idx);
     }
     else {
       err("redefinition of parameter %s", $2);
     }
+    function_param_idx++;
   }
   | function_params COMMA type ID {
-    if (lookup($4, PAR) == -1) {
-      insert_row($4, PAR, $3);
+    if (lookup_function_definiton_param($4, function_idx) == -1) {
+      insert_function_param($4, $3, function_idx, function_param_idx);
     }
     else {
       err("redefinition of parameter %s", $4);
     }
+    function_param_idx++;
   }
   ;
 
@@ -174,17 +179,19 @@ if_statement
 
 var_declaration
   : type ID {
-    if (lookup($2, VAR|PAR|GVAR) == -1) {
-      insert_row($2, VAR, $1);
+    print_table();
+    if (lookup_variable_declaration($2, function_idx) == -1) {
+      insert_var($2, $1, function_idx);
     } else {
       err("variable/parameter with that name already exists");
     }
   }
   | type ID ASSIGN expression {
+    print_table();
     if ($1 != $4) {
       err("could not assign expression to variable, mismatched types");
-    } else if (lookup($2, VAR|PAR|GVAR) == -1) {
-      insert_row($2, VAR, $1);
+    } else if (lookup_variable_declaration($2, function_idx) == -1) {
+      insert_var($2, $1, function_idx);
     } else {
       err("variable/parameter with that name already exists");
     }
@@ -192,7 +199,7 @@ var_declaration
   ;
 
 assign_statement 
-  : ID ASSIGN expression { 
+  : ID assignment_operators expression { 
     int idx = lookup($1, VAR|PAR);
     if (idx == -1) {
       err("use of undeclared variable %s", $1);
@@ -212,7 +219,10 @@ print_statement
   ;
 
 function_call
-  : ID LEFT_PAREN function_call_params RIGHT_PAREN {
+  : ID LEFT_PAREN { 
+    function_call_param_idx = 0;
+    function_call_idx = lookup($1, FUNC_KIND);
+   } function_call_params RIGHT_PAREN {
     $$ = lookup($1, FUNC_KIND); 
     if ($$ == -1) {
       err("call to undefined function %s", $1);
@@ -222,14 +232,37 @@ function_call
 
 function_call_params
   :
-  | expression
-  | function_call_params COMMA expression 
-  ;
-
-assignment_operators
-  : ASSIGN
-  | ASSIGN_PLUS
-  | ASSIGN_MINUS
+  | expression {
+    int idx = lookup_function_call_param(function_call_idx, function_call_param_idx);
+    if (idx == -1) {
+      err("function does not have param with that index(function_call_idx=%d, function_param_idx=%d)", 
+      function_call_idx, 
+      function_param_idx);
+    }
+    else if (get_type(idx) != $1) {
+      printf("%d\n", $1);
+      err("mismatched param type in call to function");
+    }
+    else {
+      // codegen
+    }
+    function_call_param_idx++;
+  }
+  | function_call_params COMMA expression {
+    int idx = lookup_function_call_param(function_call_idx, function_call_param_idx);
+    if (idx == -1) {
+      err("function does not have param with that index(function_call_idx=%d, function_param_idx=%d)", 
+      function_call_idx, 
+      function_param_idx);
+    }
+    else if (get_type(idx) != $3) {
+      err("mismatched param type in call to function");
+    }
+    else {
+      // codegen
+    }
+    function_call_param_idx++;
+  }
   ;
 
 expression
@@ -238,7 +271,13 @@ expression
 
 assignment_expression 
   : conditional_expression { $$ = $1; }
-  | ID assignment_operators assignment_expression { $$ = $3; }
+  //| ID assignment_operators assignment_expression { $$ = $3; }
+  ;
+
+assignment_operators
+  : ASSIGN
+  | ASSIGN_PLUS
+  | ASSIGN_MINUS
   ;
 
 conditional_expression
@@ -249,9 +288,10 @@ logical_or_expression
   : logical_and_expression { $$ = $1; }
   | logical_or_expression OR_OP logical_and_expression {
     if ($1 == BOOL_TYPE && $1 == $3) {
-      err("could not apply || operator to given operands");
-    } else {
+      // TODO: codegen
       $$ = $1;
+    } else {
+      err("could not apply || operator to given operands");
     }
   }
   ;
@@ -260,16 +300,24 @@ logical_and_expression
   : equality_expression { $$ = $1; }
   | logical_and_expression AND_OP equality_expression {
     if ($1 == BOOL_TYPE && $1 == $3) {
-      err("could not apply && operator to given operands");
-    } else {
+      // TODO: codegen
       $$ = $1;
+    } else {
+      err("could not apply && operator to given operands");
     }
   }
   ;
 
 equality_expression
   : unary_expression { $$ = $1; }
-  | equality_expression equality_operator unary_expression // check types
+  | equality_expression equality_operator unary_expression {
+    if ($1 != $3) {
+      err("could not apply == != operator to given operands");
+    } else {
+      // TODO: codegen
+      $$ = BOOL_TYPE;
+    }
+  }
   ;
 
 equality_operator
@@ -279,12 +327,26 @@ equality_operator
 
 unary_expression
   : relational_expression { $$ = $1; }
-  | NOT_OP relational_expression { $$ = $2; } // check types
+  | NOT_OP relational_expression { 
+    if ($2 != BOOL_TYPE) {
+      err("could not apply ! operator to given operand");
+    } else {
+      // TODO: codegen
+      $$ = BOOL_TYPE;
+    }
+   }
   ;
 
 relational_expression
   : additive_expression { $$ = $1; }
-  | relational_expression relational_operator additive_expression
+  | relational_expression relational_operator additive_expression { 
+    if ($1 != $3 || $1 == BOOL_TYPE || $3 == BOOL_TYPE) {
+      err("could not apply > >= < <= operator to given operands");
+    } else {
+      // TODO: codegen
+      $$ = BOOL_TYPE;
+    }
+   }
   ;
 
 relational_operator
@@ -296,7 +358,14 @@ relational_operator
 
 additive_expression
   : multiplicative_expression { $$ = $1; }
-  | additive_expression additive_operator multiplicative_expression {}
+  | additive_expression additive_operator multiplicative_expression {
+    if ($1 != $3) {
+      err("could not apply + - operator to given operands");
+    } else {
+      // TODO: codegen
+      $$ = $1;
+    }
+  }
   ;
 
 additive_operator
