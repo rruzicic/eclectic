@@ -1,0 +1,6 @@
+func main() {
+    int a = 5
+    while a {
+        print(1)
+    }
+}

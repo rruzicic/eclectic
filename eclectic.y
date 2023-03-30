@@ -168,18 +168,35 @@ statement
   ;
 
 while_statement
-  : WHILE expression LEFT_CURLY statement_list RIGHT_CURLY
+  : WHILE expression LEFT_CURLY statement_list RIGHT_CURLY { 
+    if ($2 != BOOL_TYPE) {
+      err("while condition expression must be of type bool");
+    }
+    else {
+      // codegen
+    }
+  }
   ;
 
 if_statement 
-  : IF expression LEFT_CURLY statement_list RIGHT_CURLY
-  | IF expression LEFT_CURLY statement_list RIGHT_CURLY ELSE LEFT_CURLY statement_list RIGHT_CURLY
-  | IF expression LEFT_CURLY statement_list RIGHT_CURLY ELSE if_statement
+  : if_part
+  | if_part ELSE LEFT_CURLY statement_list RIGHT_CURLY
+  | if_part ELSE if_statement
   ; 
+
+if_part
+  : IF expression LEFT_CURLY statement_list RIGHT_CURLY { 
+    if ($2 != BOOL_TYPE) {
+      err("if condition expression must be of type bool");
+    }
+    else {
+      // codegen
+    }
+  }
+  ;
 
 var_declaration
   : type ID {
-    print_table();
     if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
     } else {
@@ -187,7 +204,6 @@ var_declaration
     }
   }
   | type ID ASSIGN expression {
-    print_table();
     if ($1 != $4) {
       err("could not assign expression to variable, mismatched types");
     } else if (lookup_variable_declaration($2, function_idx) == -1) {
@@ -271,7 +287,6 @@ expression
 
 assignment_expression 
   : conditional_expression { $$ = $1; }
-  //| ID assignment_operators assignment_expression { $$ = $3; }
   ;
 
 assignment_operators
@@ -432,7 +447,9 @@ boolean_literal
   ;  
 
 return_statement
-  : RETURN expression 
+  : RETURN expression {
+    
+  }
   ;
 
 %%
