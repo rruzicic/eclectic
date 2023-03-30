@@ -89,6 +89,10 @@ unsigned get_type(unsigned index) {
   return symtab[index].type;
 }
 
+void set_type(unsigned index, unsigned type) {
+  symtab[index].type = type;
+}
+
 char* get_name(unsigned index) {
   if (index > first_empty) {
     return "";

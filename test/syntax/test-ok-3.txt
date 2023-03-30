@@ -5,7 +5,7 @@ func pera(int p, int b) {
     a = 5 + 2 / 3 - 5 
 }
 
-func main(int p) {
+func main() {
     int a = 5
     int b = 8
     print(a + b)

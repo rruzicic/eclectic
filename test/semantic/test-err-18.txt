@@ -1,0 +1,7 @@
+func pera() bool {
+    return 5
+}
+
+func main() {
+    pera()
+}

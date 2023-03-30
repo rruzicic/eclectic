@@ -41,6 +41,8 @@ void print_table(void);
 
 unsigned get_type(unsigned idx);
 
+void set_type(unsigned index, unsigned type);
+
 int get_func_param_num(int index);
 
 char* get_name(unsigned index);

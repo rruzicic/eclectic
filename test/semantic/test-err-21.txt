@@ -1,0 +1,7 @@
+func foo() bool {
+    return false
+}
+
+func main() {
+    int a = foo()
+}

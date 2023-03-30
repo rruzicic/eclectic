@@ -1,10 +1,10 @@
 global int pera
 
-func mul(int a, int b) {
+func mul(int a, int b) int {
     return a * b
 }
 
-func main(int p) {
+func main() {
     int a = 5
     int b = 8
     print(mul(a, b))

@@ -58,6 +58,7 @@ make
 - array types
 - implicit cast
 - explicit cast
+- function overload
 
 
 ### Types:

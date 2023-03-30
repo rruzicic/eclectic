@@ -1,0 +1,7 @@
+func foo() int {
+    return 5
+}
+
+func main() {
+    int a = foo()
+}

@@ -1,0 +1,12 @@
+func pera() bool {
+    if (5 > 3) {
+        return true
+    }
+    else {
+        return 5
+    }
+}
+
+func main() {
+    pera()
+}

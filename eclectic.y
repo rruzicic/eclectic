@@ -80,7 +80,16 @@ int function_call_idx = -1;
 %%
 
 program 
-  : global_var_list function_list
+  : global_var_list function_list { 
+    int idx = lookup("main", FUNC_KIND); 
+    if (idx == -1) { 
+      err("main function does not exist"); 
+    } else if (get_type(idx) != VOID_TYPE) {
+      err("main function is not of type void"); 
+    } else if (get_func_param_num(idx) != 0) {
+      err("main function has too many params: max 0"); 
+    }
+  }
   ;
 
 global_var_list
@@ -112,7 +121,7 @@ function
   : FUNC ID {
     function_param_idx = 0;
     if (lookup($2, FUNC_KIND) == -1) {
-      function_idx = insert_row($2, FUNC_KIND, INT_TYPE);
+      function_idx = insert_row($2, FUNC_KIND, VOID_TYPE);
     }
     else {
       err("function %s already declared", $2);
@@ -149,7 +158,7 @@ function_params
 
 function_return_type
   :
-  | type
+  | type { set_type(function_idx, $1); }
   ;
 
 statement_list
@@ -448,7 +457,13 @@ boolean_literal
 
 return_statement
   : RETURN expression {
-    
+    if (get_type(function_idx) == VOID_TYPE) {
+      err("could not return, function is of type void");
+    } else if ($2 != get_type(function_idx)) {
+      err("wrong return type");
+    } else {
+      // codegen
+    }
   }
   ;
 

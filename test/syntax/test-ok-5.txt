@@ -1,4 +1,4 @@
 func main() {
     // pera zika mika
-    return 0
+    // return 0
 }

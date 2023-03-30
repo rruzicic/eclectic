@@ -4,3 +4,7 @@ func pera(int p, int b) {
     int a
     a = 5 + 2 / 3 + 5 
 }
+
+func main() {
+    
+}
