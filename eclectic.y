@@ -1,12 +1,15 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "symtab.h"
 #include "defs.h"
 int yylex(void);
 int yyparse(void);
 int yyerror(char *);
 void warning(char *s);
+int out_lin = 0;
+FILE *output;
 
 char char_buffer[CHAR_BUFFER_LENGTH];
 
@@ -76,11 +79,12 @@ int function_call_idx = -1;
 
 %type <i> expression assignment_expression conditional_expression logical_or_expression logical_and_expression
 %type <i> equality_expression unary_expression relational_expression additive_expression multiplicative_expression primary_expression
-
+%type <i> additive_operator
 %%
 
 program 
-  : global_var_list function_list { 
+  : { code("(module \n\t(import \"console\" \"log_number\" (func $log_number (param i32)))"); }
+    global_var_list function_list { 
     int idx = lookup("main", FUNC_KIND); 
     if (idx == -1) { 
       err("main function does not exist"); 
@@ -89,6 +93,8 @@ program
     } else if (get_func_param_num(idx) != 0) {
       err("main function has too many params: max 0"); 
     }
+    //code("\n(start $main)");
+    code("\n)");
   }
   ;
 
@@ -122,6 +128,12 @@ function
     function_param_idx = 0;
     if (lookup($2, FUNC_KIND) == -1) {
       function_idx = insert_row($2, FUNC_KIND, VOID_TYPE);
+      if (strcmp($2, "main") == 0) {
+        code("\n(func (export \"main\")");
+      }
+      else {
+        code("\n(func $%s", $2);
+      }
     }
     else {
       err("function %s already declared", $2);
@@ -131,6 +143,7 @@ function
   {
     int func_param_num = get_func_param_num(function_idx);
     clear_symbols(function_idx + func_param_num + 1);
+    code(")");
   }
   ;
 
@@ -240,7 +253,14 @@ assign_statement
   ;
 
 print_statement
-  : PRINT LEFT_PAREN expression RIGHT_PAREN
+  : PRINT LEFT_PAREN expression RIGHT_PAREN {
+    if ($3 == INT_TYPE) {
+      code("\ncall $log_number");
+    }
+    else if ($3 == BOOL_TYPE) {
+      code("\ncall $log_bool");
+    }
+  }
   ;
 
 function_call
@@ -386,15 +406,17 @@ additive_expression
     if ($1 != $3) {
       err("could not apply + - operator to given operands");
     } else {
-      // TODO: codegen
+      if($2 == 1 && $1 == INT_TYPE) {
+        code("\ni32.add");
+      }
       $$ = $1;
     }
   }
   ;
 
 additive_operator
-  : PLUS_OP
-  | MINUS_OP
+  : PLUS_OP { $$ = 1; }
+  | MINUS_OP { $$ = 2; }
   ;
 
 multiplicative_expression
@@ -427,6 +449,12 @@ primary_expression
   | literal {
     $$ = $1;
   }
+  | INT_NUM {
+    $$ = INT_TYPE;
+    if($$ == INT_TYPE) {
+      code("\ni32.const %d", atoi($1));
+    }
+  }
   | function_call {
     int idx = $1;
     if (idx == -1) {
@@ -442,10 +470,7 @@ primary_expression
   ;
 
 literal  
-  : INT_NUM {
-    $$ = INT_TYPE;
-  }
-  | boolean_literal {
+  : boolean_literal {
     $$ = BOOL_TYPE;
   }
   ;
@@ -472,9 +497,14 @@ return_statement
 
 int main() {
   init_symtab();
+  output = fopen("output.wat", "w+");
+  
   int ret_val = yyparse();
 
+  fclose(output);
+
   if (err_cnt != 0) {
+    remove("output.wat");
     return 1;
   } else if (warn_cnt != 0) {
     return 2;

@@ -3,3 +3,5 @@
 *.tab.c
 *.output
 text
+*.wat
+*.wasm

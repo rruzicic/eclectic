@@ -7,9 +7,12 @@ extern int err_cnt;
 extern int warn_cnt;
 extern void warning(char *s);
 extern int yyerror(char *s);
+extern int out_lin;
 
 #define err(args...)  sprintf(char_buffer, args), yyerror(char_buffer), err_cnt++
 #define warn(args...) sprintf(char_buffer, args), warning(char_buffer), warn_cnt++
+#define code(args...) ({fprintf(output, args); \
+          if (++out_lin > 2000) err("Too many output lines"), exit(1); })
 
 enum Kind {
     NO_KIND     = 1 << 0,

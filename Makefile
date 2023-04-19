@@ -17,3 +17,6 @@ clean:
 	rm -f $(SRC).tab.h
 	rm -f $(SRC).output
 	rm -f $(SRC)
+	rm -f *.wat
+	rm -f *.wasm
+	

@@ -4,7 +4,7 @@ TEST_DIR=test
 SRC=eclectic
 
 # expand for more test types here and in switch case
-TEST_GROUPS_DEFAULT=(syntax semantic)
+TEST_GROUPS_DEFAULT=(syntax semantic codegen)
 
 TEST_TYPES_DEFAULT=(ok err warn)
 TEST_TYPES_RETURNS_DEFAULT=(0 1 2)
@@ -21,6 +21,7 @@ while [[ "$#" -gt 0 ]]; do
         # expand for mor test types here
         syntax) TEST_GROUPS+=(syntax) ;;
         semantic) TEST_GROUPS+=(semantic) ;;
+        codegen) TEST_GROUPS+=(codegen) ;;
     esac 
     shift
 done
@@ -47,9 +48,25 @@ for test_group_idx in ${!TEST_GROUPS[@]}; do
             fi
             return_value=${TEST_TYPES_RETURNS[$test_type_idx]}            
             ./$SRC < $file 1>/dev/null 2>/dev/null
-            if [ $? -eq $return_value ]
+            RETURN_VALUE=$?
+
+            if [ $RETURN_VALUE -eq $return_value ]
             then
-                echo -e "[\033[92mPASSED\033[0m] $file"
+                if [ $RETURN_VALUE -eq 0 ] && [ "${TEST_GROUPS[test_group_idx]}" == "codegen" ]
+                then
+                    wat2wasm output.wat -o program.wasm 
+                    OUTPUT=$(node program.js)
+                    DEFINED_OUTPUT=$(grep "// RETURN:" $file | cut -d ':' -f2)
+                    if [ "$OUTPUT" == "$DEFINED_OUTPUT" ] 
+                    then
+                        echo -e "[\033[92mPASSED\033[0m] $file"
+                    else 
+                        echo -e "[\033[91mFAILED\033[0m] $file"
+                    fi
+                    
+                else
+                    echo -e "[\033[92mPASSED\033[0m] $file"
+                fi
             else
                 echo -e "[\033[91mFAILED\033[0m] $file"
             fi

@@ -24,6 +24,8 @@ make
 - GNU Bison 3.5.1
 - flex 2.6.4
 - gcc 9.4.0
+- node 17.8.0
+- wat2wasm 1.0.13
 
 ## Language features(both planned and implemented) 
 
