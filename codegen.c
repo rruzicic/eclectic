@@ -48,13 +48,19 @@ void append_local_variable(int function_idx, FILE* output, unsigned type, char *
     while (fgets(buffer, 200, output) != NULL) {
         fprintf(tmp, "%s", buffer);
         if (strcmp(cmp, buffer) == 0) {
-            if (type == INT_TYPE) {
-                fprintf(tmp, "\n\t(local $%s i32)", name);
-            }
+            fprintf(tmp, "\n\t(local $%s %s)", name, get_wasm_type(type));
         }   
     }
 
     copy_tmp_to_output(tmp);
+}
+
+char* get_wasm_type(unsigned type) {
+    if (type == INT_TYPE) {
+        return "i32";
+    } else if (type == BOOL_TYPE) {
+        return "dont know what type ill use for this";
+    }
 }
 
 

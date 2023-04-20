@@ -6,4 +6,6 @@ void append_local_variable(int function_idx, FILE* output, unsigned type, char *
 
 FILE* init_out_file();
 
+char* get_wasm_type(unsigned type);
+
 #endif

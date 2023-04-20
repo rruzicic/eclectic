@@ -135,7 +135,7 @@ function
       else {
         code("\n\t(func $%s", $2);
       }
-      code("\n\t;; LOCAL VARIABLES: function_idx=%d\n", function_idx);
+      
     }
     else {
       err("function %s already declared", $2);
@@ -154,6 +154,7 @@ function_params
   | type ID {
     if (lookup_function_definiton_param($2, function_idx) == -1) {
       insert_function_param($2, $1, function_idx, function_param_idx);
+      code(" (param $%s %s) ", $2, get_wasm_type($1));
     }
     else {
       err("redefinition of parameter %s", $2);
@@ -163,6 +164,7 @@ function_params
   | function_params COMMA type ID {
     if (lookup_function_definiton_param($4, function_idx) == -1) {
       insert_function_param($4, $3, function_idx, function_param_idx);
+      code(" (param $%s %s) ", $4, get_wasm_type($3));
     }
     else {
       err("redefinition of parameter %s", $4);
@@ -172,8 +174,12 @@ function_params
   ;
 
 function_return_type
-  :
-  | type { set_type(function_idx, $1); }
+  : { code("\n\t;; LOCAL VARIABLES: function_idx=%d\n", function_idx); }
+  | type { 
+    set_type(function_idx, $1); 
+    code(" (result %s)", get_wasm_type($1));
+    code("\n\t;; LOCAL VARIABLES: function_idx=%d\n", function_idx);
+  }
   ;
 
 statement_list
@@ -223,35 +229,21 @@ var_declaration
   : type ID {
     if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
-      if ($1 == INT_TYPE) {
-        //code("\n\t(local $%s i32)", $2);
-        append_local_variable(function_idx, output, INT_TYPE, $2);
-      }
-      else if ($1 = BOOL_TYPE) {
-        // TODO: bool type
-      }
+      append_local_variable(function_idx, output, INT_TYPE, $2);
+      
     } else {
       err("variable/parameter with that name already exists");
     }
   }
   | type ID {
-    if ($1 == INT_TYPE) {
-        append_local_variable(function_idx, output, INT_TYPE, $2);
-      }
-      else if ($1 = BOOL_TYPE) {
-        // TODO: bool type
-      }
+    append_local_variable(function_idx, output, $1, $2);
+      
   } ASSIGN expression {
     if ($1 != $5) {
       err("could not assign expression to variable, mismatched types");
     } else if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
-      if ($1 == INT_TYPE) {
-        code("\n\t(local.set $%s)", $2);
-      }
-      else if ($1 = BOOL_TYPE) {
-        // TODO: bool type
-      }
+      code("\n\t(local.set $%s)", $2);
     } else {
       err("variable/parameter with that name already exists");
     }
@@ -268,15 +260,7 @@ assign_statement
       if (type != $3) {
         err("could not asssign expression to a variable, mismatched types");
       } else {
-
-
-        if (type == INT_TYPE) {
-          code("\n\t(local.set $%s)", $1);
-        } else if (type == BOOL_TYPE) {
-          // TODO: bool type
-        }
-
-
+        code("\n\t(local.set $%s)", $1);
       }
     }
    }
@@ -301,6 +285,9 @@ function_call
     $$ = lookup($1, FUNC_KIND); 
     if ($$ == -1) {
       err("call to undefined function %s", $1);
+    }
+    else {
+      code("\n\tcall $%s", $1);
     }
   }
   ;
@@ -437,11 +424,7 @@ additive_expression
       err("could not apply + - operator to given operands");
     } else {
       if($2 == 1) { 
-        if ($1 == INT_TYPE) {
-          code("\n\ti32.add");
-        } else if ($2 == BOOL_TYPE) {
-          // TODO: bool type
-        }
+        code("\n\t%s.add", get_wasm_type($1));
       }
       $$ = $1;
     }
@@ -486,9 +469,7 @@ primary_expression
   }
   | INT_NUM {
     $$ = INT_TYPE;
-    if($$ == INT_TYPE) {
-      code("\n\ti32.const %d", atoi($1));
-    }
+    code("\n\t%s.const %d", get_wasm_type(INT_TYPE),atoi($1));
   }
   | function_call {
     int idx = $1;
@@ -522,6 +503,7 @@ return_statement
     } else if ($2 != get_type(function_idx)) {
       err("wrong return type");
     } else {
+      code("\n\treturn");
       // codegen
     }
   }

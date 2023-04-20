@@ -1,0 +1,12 @@
+// RETURN:11
+func add(int a, int b) int {
+    return a + b
+}
+
+func main() {
+    int a = 5
+    int b = 4 + 2
+    int c
+    c = add(a, b)
+    print(c)
+}
