@@ -4,6 +4,8 @@
 #include <string.h>
 #include "symtab.h"
 #include "defs.h"
+#include "codegen.h"
+
 int yylex(void);
 int yyparse(void);
 int yyerror(char *);
@@ -93,7 +95,6 @@ program
     } else if (get_func_param_num(idx) != 0) {
       err("main function has too many params: max 0"); 
     }
-    //code("\n(start $main)");
     code("\n)");
   }
   ;
@@ -129,11 +130,12 @@ function
     if (lookup($2, FUNC_KIND) == -1) {
       function_idx = insert_row($2, FUNC_KIND, VOID_TYPE);
       if (strcmp($2, "main") == 0) {
-        code("\n(func (export \"main\")");
+        code("\n\t(func (export \"main\")");
       }
       else {
-        code("\n(func $%s", $2);
+        code("\n\t(func $%s", $2);
       }
+      code("\n\t;; LOCAL VARIABLES: function_idx=%d\n", function_idx);
     }
     else {
       err("function %s already declared", $2);
@@ -221,15 +223,35 @@ var_declaration
   : type ID {
     if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
+      if ($1 == INT_TYPE) {
+        //code("\n\t(local $%s i32)", $2);
+        append_local_variable(function_idx, output, INT_TYPE, $2);
+      }
+      else if ($1 = BOOL_TYPE) {
+        // TODO: bool type
+      }
     } else {
       err("variable/parameter with that name already exists");
     }
   }
-  | type ID ASSIGN expression {
-    if ($1 != $4) {
+  | type ID {
+    if ($1 == INT_TYPE) {
+        append_local_variable(function_idx, output, INT_TYPE, $2);
+      }
+      else if ($1 = BOOL_TYPE) {
+        // TODO: bool type
+      }
+  } ASSIGN expression {
+    if ($1 != $5) {
       err("could not assign expression to variable, mismatched types");
     } else if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
+      if ($1 == INT_TYPE) {
+        code("\n\t(local.set $%s)", $2);
+      }
+      else if ($1 = BOOL_TYPE) {
+        // TODO: bool type
+      }
     } else {
       err("variable/parameter with that name already exists");
     }
@@ -246,7 +268,15 @@ assign_statement
       if (type != $3) {
         err("could not asssign expression to a variable, mismatched types");
       } else {
-        // codegen
+
+
+        if (type == INT_TYPE) {
+          code("\n\t(local.set $%s)", $1);
+        } else if (type == BOOL_TYPE) {
+          // TODO: bool type
+        }
+
+
       }
     }
    }
@@ -255,10 +285,10 @@ assign_statement
 print_statement
   : PRINT LEFT_PAREN expression RIGHT_PAREN {
     if ($3 == INT_TYPE) {
-      code("\ncall $log_number");
+      code("\n\tcall $log_number");
     }
     else if ($3 == BOOL_TYPE) {
-      code("\ncall $log_bool");
+      code("\n\tcall $log_bool");
     }
   }
   ;
@@ -406,8 +436,12 @@ additive_expression
     if ($1 != $3) {
       err("could not apply + - operator to given operands");
     } else {
-      if($2 == 1 && $1 == INT_TYPE) {
-        code("\ni32.add");
+      if($2 == 1) { 
+        if ($1 == INT_TYPE) {
+          code("\n\ti32.add");
+        } else if ($2 == BOOL_TYPE) {
+          // TODO: bool type
+        }
       }
       $$ = $1;
     }
@@ -444,6 +478,7 @@ primary_expression
     }
     else {
       $$ = get_type(idx);
+      code("\n\tlocal.get $%s", $1);
     }
   }
   | literal {
@@ -452,7 +487,7 @@ primary_expression
   | INT_NUM {
     $$ = INT_TYPE;
     if($$ == INT_TYPE) {
-      code("\ni32.const %d", atoi($1));
+      code("\n\ti32.const %d", atoi($1));
     }
   }
   | function_call {
@@ -497,7 +532,7 @@ return_statement
 
 int main() {
   init_symtab();
-  output = fopen("output.wat", "w+");
+  output = init_out_file();
   
   int ret_val = yyparse();
 

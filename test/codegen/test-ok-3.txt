@@ -1,0 +1,7 @@
+// RETURN:7
+func main() {
+    int a = 3
+    int b
+    b = 4
+    print(a + b)
+}

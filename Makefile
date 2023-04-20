@@ -2,7 +2,7 @@ SHELL = /bin/bash
 SRC = eclectic
 .PHONY: clean
 
-$(SRC): defs.h lex.yy.c $(SRC).tab.c symtab.c symtab.h
+$(SRC): defs.h lex.yy.c $(SRC).tab.c symtab.c symtab.h codegen.c codegen.h
 	gcc -o $@ $+
 
 lex.yy.c: $(SRC).l $(SRC).tab.c

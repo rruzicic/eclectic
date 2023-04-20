@@ -63,14 +63,14 @@ for test_group_idx in ${!TEST_GROUPS[@]}; do
                     else 
                         echo -e "[\033[91mFAILED\033[0m] $file"
                     fi
-                    
                 else
                     echo -e "[\033[92mPASSED\033[0m] $file"
                 fi
             else
                 echo -e "[\033[91mFAILED\033[0m] $file"
             fi
-            
+            #rm -f output.wat
+            #rm -f program.wasm
         done
     done
 done
