@@ -1,0 +1,4 @@
+// RETURN:true
+func main() {
+    print(true)
+}

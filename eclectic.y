@@ -79,10 +79,11 @@ int function_call_idx = -1;
 %type <i> literal type 
 %type <i> function_call
 
-%type <i> expression assignment_expression conditional_expression logical_or_expression logical_and_expression
+%type <i> expression logical_or_expression logical_and_expression
 %type <i> equality_expression unary_expression relational_expression additive_expression multiplicative_expression primary_expression
 
-%type <s> additive_operator relational_operator multiplicative_operator equality_operator
+%type <s> additive_operator relational_operator multiplicative_operator equality_operator 
+%type <i> assignment_operators
 %%
 
 program 
@@ -131,7 +132,8 @@ function_list
   ;
 
 function
-  : FUNC ID {
+  : FUNC ID 
+  {
     function_param_idx = 0;
     if (lookup($2, FUNC_KIND) == -1) {
       function_idx = insert_row($2, FUNC_KIND, VOID_TYPE);
@@ -157,7 +159,8 @@ function
 
 function_params
   :
-  | type ID {
+  | type ID 
+  {
     if (lookup_function_definiton_param($2, function_idx) == -1) {
       insert_function_param($2, $1, function_idx, function_param_idx);
       code(" (param $%s %s) ", $2, get_wasm_type($1));
@@ -167,7 +170,8 @@ function_params
     }
     function_param_idx++;
   }
-  | function_params COMMA type ID {
+  | function_params COMMA type ID 
+  {
     if (lookup_function_definiton_param($4, function_idx) == -1) {
       insert_function_param($4, $3, function_idx, function_param_idx);
       code(" (param $%s %s) ", $4, get_wasm_type($3));
@@ -221,7 +225,8 @@ if_statement
   ; 
 
 if_part
-  : IF expression LEFT_CURLY statement_list RIGHT_CURLY { 
+  : IF expression LEFT_CURLY statement_list RIGHT_CURLY 
+  { 
     if ($2 != BOOL_TYPE) {
       err("if condition expression must be of type bool");
     }
@@ -232,7 +237,8 @@ if_part
   ;
 
 var_declaration
-  : type ID {
+  : type ID 
+  {
     if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
       append_local_variable(function_idx, output, INT_TYPE, $2);
@@ -241,10 +247,12 @@ var_declaration
       err("variable/parameter with that name already exists");
     }
   }
-  | type ID {
-    append_local_variable(function_idx, output, $1, $2);
-      
-  } ASSIGN expression {
+  | type ID 
+  { 
+    append_local_variable(function_idx, output, $1, $2); 
+  } 
+  ASSIGN expression 
+  {
     if ($1 != $5) {
       err("could not assign expression to variable, mismatched types");
     } else if (lookup_variable_declaration($2, function_idx) == -1) {
@@ -257,23 +265,56 @@ var_declaration
   ;
 
 assign_statement 
-  : ID assignment_operators expression { 
+  : ID assignment_operators
+  {
+    switch($2) {
+      case 0:
+      break;
+      case 1:
+        code("\n\t(local.get $%s)", $1);
+      break;
+      case 2:
+        code("\n\t(local.get $%s)", $1);
+      break;
+    }
+  }
+  expression 
+  { 
     int idx = lookup($1, VAR|PAR);
     if (idx == -1) {
       err("use of undeclared variable %s", $1);
     } else {
       unsigned type = get_type(idx);
-      if (type != $3) {
+      if (type != $4) {
         err("could not asssign expression to a variable, mismatched types");
       } else {
-        code("\n\t(local.set $%s)", $1);
+        switch($2) {
+          case 0:
+            code("\n\t(local.set $%s)", $1);
+          break;
+          case 1:
+            code("\n\t%s.add", get_wasm_type(type));
+            code("\n\t(local.set $%s)", $1);
+          break;
+          case 2:
+            code("\n\t%s.sub", get_wasm_type(type));
+            code("\n\t(local.set $%s)", $1);
+          break;
+        }
       }
     }
-   }
+  }
+  ;
+
+assignment_operators
+  : ASSIGN { $$ = 0; }
+  | ASSIGN_PLUS { $$ = 1; }
+  | ASSIGN_MINUS { $$ = 2; }
   ;
 
 print_statement
-  : PRINT LEFT_PAREN expression RIGHT_PAREN {
+  : PRINT LEFT_PAREN expression RIGHT_PAREN 
+  {
     if ($3 == INT_TYPE) {
       code("\n\tcall $log_number");
     }
@@ -284,10 +325,13 @@ print_statement
   ;
 
 function_call
-  : ID LEFT_PAREN { 
+  : ID LEFT_PAREN 
+  { 
     function_call_param_idx = 0;
     function_call_idx = lookup($1, FUNC_KIND);
-   } function_call_params RIGHT_PAREN {
+  } 
+  function_call_params RIGHT_PAREN 
+  {
     $$ = lookup($1, FUNC_KIND); 
     if ($$ == -1) {
       err("call to undefined function %s", $1);
@@ -300,7 +344,8 @@ function_call
 
 function_call_params
   :
-  | expression {
+  | expression 
+  {
     int idx = lookup_function_call_param(function_call_idx, function_call_param_idx);
     if (idx == -1) {
       err("function does not have param with that index(function_call_idx=%d, function_param_idx=%d)", 
@@ -316,7 +361,8 @@ function_call_params
     }
     function_call_param_idx++;
   }
-  | function_call_params COMMA expression {
+  | function_call_params COMMA expression 
+  {
     int idx = lookup_function_call_param(function_call_idx, function_call_param_idx);
     if (idx == -1) {
       err("function does not have param with that index(function_call_idx=%d, function_param_idx=%d)", 
@@ -334,26 +380,13 @@ function_call_params
   ;
 
 expression
-  : assignment_expression { $$ = $1; }
-  ;
-
-assignment_expression 
-  : conditional_expression { $$ = $1; }
-  ;
-
-assignment_operators
-  : ASSIGN
-  | ASSIGN_PLUS
-  | ASSIGN_MINUS
-  ;
-
-conditional_expression
   : logical_or_expression { $$ = $1; }
   ;
 
 logical_or_expression 
   : logical_and_expression { $$ = $1; }
-  | logical_or_expression OR_OP logical_and_expression {
+  | logical_or_expression OR_OP logical_and_expression 
+  {
     if ($1 == BOOL_TYPE && $1 == $3) {
       code("\n\t%s.or", get_wasm_type($1));
       $$ = $1;
@@ -365,7 +398,8 @@ logical_or_expression
 
 logical_and_expression 
   : equality_expression { $$ = $1; }
-  | logical_and_expression AND_OP equality_expression {
+  | logical_and_expression AND_OP equality_expression 
+  {
     if ($1 == BOOL_TYPE && $1 == $3) {
       code("\n\t%s.and", get_wasm_type($1));
       $$ = $1;
@@ -377,7 +411,8 @@ logical_and_expression
 
 equality_expression
   : unary_expression { $$ = $1; }
-  | equality_expression equality_operator unary_expression {
+  | equality_expression equality_operator unary_expression 
+  {
     if ($1 != $3) {
       err("could not apply == != operator to given operands");
     } else {
@@ -446,7 +481,8 @@ additive_operator
 
 multiplicative_expression
   : primary_expression { $$ = $1; }
-  | multiplicative_expression multiplicative_operator primary_expression {
+  | multiplicative_expression multiplicative_operator primary_expression 
+  {
     if ($1 == $3) {
       $$ = $1;
       code("\n\t%s.%s", get_wasm_type($1), $2);
@@ -463,7 +499,8 @@ multiplicative_operator
   ;  
 
 primary_expression
-  : ID {
+  : ID 
+  {
     int idx = lookup($1, VAR|PAR|GVAR);
     if (idx == -1) {
       err("use of undefined variable %s", $1);
@@ -473,14 +510,14 @@ primary_expression
       code("\n\tlocal.get $%s", $1);
     }
   }
-  | literal {
-    $$ = $1;
-  }
-  | INT_NUM {
+  | literal { $$ = $1; }
+  | INT_NUM 
+  {
     $$ = INT_TYPE;
     code("\n\t%s.const %d", get_wasm_type(INT_TYPE),atoi($1));
   }
-  | function_call {
+  | function_call 
+  {
     int idx = $1;
     if (idx == -1) {
       err("call of undefined function %s", get_name($1));
@@ -489,24 +526,24 @@ primary_expression
       $$ = get_type(idx);
     }
   }
-  | LEFT_PAREN expression RIGHT_PAREN {
-    $$ = $2;
-  }
+  | LEFT_PAREN expression RIGHT_PAREN { $$ = $2; }
   ;
 
 literal  
-  : boolean_literal {
+  : boolean_literal 
+  {
     $$ = BOOL_TYPE;
   }
   ;
 
 boolean_literal
-  : TRUE_VAL
-  | FALSE_VAL
+  : TRUE_VAL { code("\n\t i32.const 1");}
+  | FALSE_VAL { code("\n\t i32.const 0");}
   ;  
 
 return_statement
-  : RETURN expression {
+  : RETURN expression 
+  {
     if (get_type(function_idx) == VOID_TYPE) {
       err("could not return, function is of type void");
     } else if ($2 != get_type(function_idx)) {

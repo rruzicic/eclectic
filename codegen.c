@@ -59,7 +59,7 @@ char* get_wasm_type(unsigned type) {
     if (type == INT_TYPE) {
         return "i32";
     } else if (type == BOOL_TYPE) {
-        return "dont know what type ill use for this";
+        return "i32";
     }
 }
 

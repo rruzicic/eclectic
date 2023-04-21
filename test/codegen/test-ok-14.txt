@@ -1,0 +1,8 @@
+// RETURN:true
+func isequal(int a, int b) bool {
+    return a == b
+}
+
+func main() {
+    print(isequal(5, 5))
+}

@@ -2,10 +2,13 @@
 
 ## Build and run
 
+Firstly run `make` to generate binaries, then run the following commands:
 ```
-make
-
 ./eclectic < your_eclictic_code.txt
+
+wat2wasm output.wat -o program.wasm
+
+node program.js
 ```
 
 ## Test
@@ -30,8 +33,8 @@ make
 ## Language features(both planned and implemented) 
 
 ### MVP: 
-- assignment
-- basic arithmetic operations
+- [x] assignment 
+- [x] basic arithmetic operations 
     - addition
     - subtraction
     - multiplication
@@ -42,14 +45,16 @@ make
 
 - flow control - if/else
 - loops while(maybe for(maybe combine them like in golang))
-- print() function 
-- functions
-- main function 
+- [x] print() function 
+- [x] functions
+- [x] main function 
+- global vars
 
 ### Nice to have:
 - structs
-- multiline comments
+- [x] multiline comments
 - basic binary operations
+- VSCode syntax highlighting
 
 
 ### Advanced requirements:
