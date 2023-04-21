@@ -1,0 +1,5 @@
+// RETURN:true
+func main() {
+    int a = 4
+    print(5 + a == 9)
+}

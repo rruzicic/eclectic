@@ -1,0 +1,4 @@
+// RETURN:10
+func main() {
+    print((2 + 12 / 3 - 1) * 2)
+}

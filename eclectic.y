@@ -81,11 +81,17 @@ int function_call_idx = -1;
 
 %type <i> expression assignment_expression conditional_expression logical_or_expression logical_and_expression
 %type <i> equality_expression unary_expression relational_expression additive_expression multiplicative_expression primary_expression
-%type <i> additive_operator
+
+%type <s> additive_operator relational_operator multiplicative_operator equality_operator
 %%
 
 program 
-  : { code("(module \n\t(import \"console\" \"log_number\" (func $log_number (param i32)))"); }
+  : { 
+      code("(module \n\t(import \"console\" \"log_number\" (func $log_number (param i32)))"); 
+      code("\n\t(import \"console\" \"log_bool\" (func $log_bool (param i32)))");
+      code("\n\t(import \"console\" \"log_string\" (func $log_string (param i32)))");
+
+    }
     global_var_list function_list { 
     int idx = lookup("main", FUNC_KIND); 
     if (idx == -1) { 
@@ -349,7 +355,7 @@ logical_or_expression
   : logical_and_expression { $$ = $1; }
   | logical_or_expression OR_OP logical_and_expression {
     if ($1 == BOOL_TYPE && $1 == $3) {
-      // TODO: codegen
+      code("\n\t%s.or", get_wasm_type($1));
       $$ = $1;
     } else {
       err("could not apply || operator to given operands");
@@ -361,7 +367,7 @@ logical_and_expression
   : equality_expression { $$ = $1; }
   | logical_and_expression AND_OP equality_expression {
     if ($1 == BOOL_TYPE && $1 == $3) {
-      // TODO: codegen
+      code("\n\t%s.and", get_wasm_type($1));
       $$ = $1;
     } else {
       err("could not apply && operator to given operands");
@@ -375,65 +381,67 @@ equality_expression
     if ($1 != $3) {
       err("could not apply == != operator to given operands");
     } else {
-      // TODO: codegen
       $$ = BOOL_TYPE;
+      code("\n\t%s.%s", get_wasm_type($1), $2);
     }
   }
   ;
 
 equality_operator
-  : EQ_OP
-  | NEQ_OP
+  : EQ_OP { $$ = "eq"; }
+  | NEQ_OP { $$ = "ne"; }
   ;
 
 unary_expression
   : relational_expression { $$ = $1; }
-  | NOT_OP relational_expression { 
+  | NOT_OP relational_expression 
+  { 
     if ($2 != BOOL_TYPE) {
       err("could not apply ! operator to given operand");
     } else {
       // TODO: codegen
       $$ = BOOL_TYPE;
     }
-   }
+  }
   ;
 
 relational_expression
   : additive_expression { $$ = $1; }
-  | relational_expression relational_operator additive_expression { 
+  | relational_expression relational_operator additive_expression 
+  { 
     if ($1 != $3 || $1 == BOOL_TYPE || $3 == BOOL_TYPE) {
       err("could not apply > >= < <= operator to given operands");
     } else {
-      // TODO: codegen
       $$ = BOOL_TYPE;
+      code("\n\t%s.%s", get_wasm_type($1), $2);
     }
-   }
+  }
   ;
 
 relational_operator
-  : LT_OP
-  | GT_OP
-  | LTE_OP
-  | GTE_OP
+  : LT_OP { $$ = "lt_u"; }
+  | GT_OP { $$ = "gt_u"; }
+  | LTE_OP { $$ = "le_u"; }
+  | GTE_OP { $$ = "ge_u"; }
   ;
 
 additive_expression
   : multiplicative_expression { $$ = $1; }
-  | additive_expression additive_operator multiplicative_expression {
+  | additive_expression additive_operator multiplicative_expression 
+  {
     if ($1 != $3) {
       err("could not apply + - operator to given operands");
     } else {
-      if($2 == 1) { 
-        code("\n\t%s.add", get_wasm_type($1));
-      }
+      code("\n\t%s.%s", get_wasm_type($1), $2);
+
       $$ = $1;
     }
   }
   ;
 
 additive_operator
-  : PLUS_OP { $$ = 1; }
-  | MINUS_OP { $$ = 2; }
+  : PLUS_OP { $$ = "add"; }
+  | MINUS_OP { $$ = "sub"; }
   ;
 
 multiplicative_expression
@@ -441,6 +449,7 @@ multiplicative_expression
   | multiplicative_expression multiplicative_operator primary_expression {
     if ($1 == $3) {
       $$ = $1;
+      code("\n\t%s.%s", get_wasm_type($1), $2);
     } else {
       err("could not apply * / %% operator to given operands");
     }
@@ -448,9 +457,9 @@ multiplicative_expression
   ;
 
 multiplicative_operator 
-  : MUL_OP
-  | DIV_OP
-  | MOD_OP
+  : MUL_OP { $$ = "mul"; }
+  | DIV_OP { $$ = "div_u"; }
+  | MOD_OP { $$ = "rem_u"; }
   ;  
 
 primary_expression
@@ -504,7 +513,6 @@ return_statement
       err("wrong return type");
     } else {
       code("\n\treturn");
-      // codegen
     }
   }
   ;
