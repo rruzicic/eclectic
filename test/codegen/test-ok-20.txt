@@ -1,0 +1,11 @@
+// RETURN:0 25 50 75
+func main() {
+    int n = 100
+    int i = 0
+    while(i < n) {
+        if(i % 25 == 0) {
+            print(i)
+        }
+        i += 1
+    }
+}

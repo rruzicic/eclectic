@@ -1,0 +1,7 @@
+// RETURN:5
+global int a
+
+func main() {
+    a = 5
+    print(a)
+}

@@ -15,7 +15,7 @@ typedef struct symtab_row {
 
 // returns the index of a symbol with given name and type,
 // if there is no such symbol it returns -1
-int lookup(char* name, unsigned type);
+int lookup(char* name, unsigned kind);
 
 int lookup_function_call_param(int function_idx, int function_param_idx);
 
@@ -40,6 +40,8 @@ void clear_symbols(unsigned begin_index);
 void print_table(void);
 
 unsigned get_type(unsigned idx);
+
+unsigned get_kind(unsigned idx);
 
 void set_type(unsigned index, unsigned type);
 

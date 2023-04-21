@@ -115,6 +115,11 @@ global_var_declaration
   : GLOBAL type ID {
     if (lookup($3, GVAR) == -1) {
       insert_row($3, GVAR, $2);
+      if ($2 == INT_TYPE) {
+        code("\n\t(global $%s (mut %s) (%s.const 0))", $3, get_wasm_type($2), get_wasm_type($2));
+      } else if ($2 == BOOL_TYPE) {
+        code("\n\t(global $%s (mut %s) (%s.const 0))", $3, get_wasm_type($2), get_wasm_type($2));
+      }
     } else {
       err("redefinition of global variable %s", $3);
     }
@@ -208,12 +213,31 @@ statement
   ;
 
 while_statement
-  : WHILE expression LEFT_CURLY statement_list RIGHT_CURLY { 
-    if ($2 != BOOL_TYPE) {
+  :
+  {
+    code("\n\t(block");
+    code("\n\t(loop");
+  } 
+  WHILE expression LEFT_CURLY 
+  {
+    code("\n\ti32.const 0");
+    code("\n\ti32.eq");
+    code("\n\tbr_if 1");
+    code("\n\t(loop");
+    
+  }
+  statement_list RIGHT_CURLY 
+  { 
+    if ($3 != BOOL_TYPE) {
       err("while condition expression must be of type bool");
     }
     else {
-      // codegen
+      // coppied expression goes here
+      code("\n\tbr 1");
+      code("\n\t)");
+      code("\n\t)");
+      code("\n\t)");
+
     }
   }
   ;
@@ -263,7 +287,6 @@ var_declaration
     if (lookup_variable_declaration($2, function_idx) == -1) {
       insert_var($2, $1, function_idx);
       append_local_variable(function_idx, output, INT_TYPE, $2);
-      
     } else {
       err("variable/parameter with that name already exists");
     }
@@ -288,38 +311,59 @@ var_declaration
 assign_statement 
   : ID assignment_operators
   {
+    int idx = lookup($1, VAR|PAR|GVAR);
     switch($2) {
       case 0:
       break;
       case 1:
-        code("\n\t(local.get $%s)", $1);
-      break;
       case 2:
-        code("\n\t(local.get $%s)", $1);
+        if(get_kind(idx) == GVAR) {
+          code("\n\t(global.get $%s)", $1);
+        }
+        else {
+          code("\n\t(local.get $%s)", $1);
+        }
+      
       break;
     }
   }
   expression 
   { 
-    int idx = lookup($1, VAR|PAR);
+    int idx = lookup($1, VAR|PAR|GVAR);
     if (idx == -1) {
       err("use of undeclared variable %s", $1);
     } else {
       unsigned type = get_type(idx);
+      unsigned kind = get_kind(idx);
       if (type != $4) {
         err("could not asssign expression to a variable, mismatched types");
       } else {
         switch($2) {
           case 0:
-            code("\n\t(local.set $%s)", $1);
+            if(kind == GVAR) {
+              code("\n\t(global.set $%s)", $1);
+            }
+            else {
+              code("\n\t(local.set $%s)", $1);
+            }
           break;
           case 1:
             code("\n\t%s.add", get_wasm_type(type));
-            code("\n\t(local.set $%s)", $1);
+            if(kind == GVAR) {
+              code("\n\t(global.set $%s)", $1);
+            }
+            else {
+              code("\n\t(local.set $%s)", $1);
+            }
           break;
           case 2:
             code("\n\t%s.sub", get_wasm_type(type));
-            code("\n\t(local.set $%s)", $1);
+            if(kind == GVAR) {
+              code("\n\t(global.set $%s)", $1);
+            }
+            else {
+              code("\n\t(local.set $%s)", $1);
+            }
           break;
         }
       }
@@ -455,7 +499,7 @@ unary_expression
     if ($2 != BOOL_TYPE) {
       err("could not apply ! operator to given operand");
     } else {
-      // TODO: codegen
+      //code("\n\ti32.eqz (if(then i32.const 1)(else i32.const 0))");
       $$ = BOOL_TYPE;
     }
   }
@@ -528,7 +572,12 @@ primary_expression
     }
     else {
       $$ = get_type(idx);
-      code("\n\tlocal.get $%s", $1);
+      if(get_kind(idx) == GVAR) {
+        code("\n\tglobal.get $%s", $1);
+      }
+      else {
+        code("\n\tlocal.get $%s", $1);
+      }
     }
   }
   | literal { $$ = $1; }
@@ -558,8 +607,8 @@ literal
   ;
 
 boolean_literal
-  : TRUE_VAL { code("\n\t i32.const 1");}
-  | FALSE_VAL { code("\n\t i32.const 0");}
+  : TRUE_VAL { code("\n\ti32.const 1");}
+  | FALSE_VAL { code("\n\ti32.const 0");}
   ;  
 
 return_statement

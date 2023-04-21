@@ -55,8 +55,9 @@ for test_group_idx in ${!TEST_GROUPS[@]}; do
                 if [ $RETURN_VALUE -eq 0 ] && [ "${TEST_GROUPS[test_group_idx]}" == "codegen" ]
                 then
                     wat2wasm output.wat -o program.wasm 
-                    OUTPUT=$(node program.js)
-                    DEFINED_OUTPUT=$(grep "// RETURN:" $file | cut -d ':' -f2)
+                    OUTPUT=$(node program.js | tr '\n' ' ') 
+                    DEFINED_OUTPUT=$(grep "// RETURN:" $file | cut -d ':' -f2 | tr '\n' ' ')
+                    #echo "$OUTPUT"
                     if [ "$OUTPUT" == "$DEFINED_OUTPUT" ] 
                     then
                         echo -e "[\033[92mPASSED\033[0m] $file"

@@ -89,6 +89,13 @@ unsigned get_type(unsigned index) {
   return symtab[index].type;
 }
 
+unsigned get_kind(unsigned idx) {
+  if (idx > first_empty) {
+    return NO_TYPE;
+  }
+  return symtab[idx].kind;
+}
+
 void set_type(unsigned index, unsigned type) {
   symtab[index].type = type;
 }
