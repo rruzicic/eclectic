@@ -1,9 +1,12 @@
-// RETURN:2
+// RETURN:3
 func main() {
     if (1 == 2) {
         print(1)
     }
-    else {
+    else if (2 == 3) {
         print(2)
+    }
+    else {
+        print(3)
     }
 }

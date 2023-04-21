@@ -63,6 +63,16 @@ char* get_wasm_type(unsigned type) {
     }
 }
 
+char* get_wasm_function_implicit_return(unsigned type) {
+    if (type == INT_TYPE) {
+        return "i32.const 0\n\treturn";
+    } else if (type == BOOL_TYPE) {
+        return "i32.const 0\n\treturn";
+    } else if (type == VOID_TYPE) {
+        return "";
+    }
+}
+
 
 
 

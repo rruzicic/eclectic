@@ -1,7 +1,7 @@
-func fib() int {
-    
-}
-
+// RETURN:1
 func main() {
-     
+    bool a = true
+    if (a) {
+        print(1)
+    }
 }

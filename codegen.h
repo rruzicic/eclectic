@@ -8,4 +8,6 @@ FILE* init_out_file();
 
 char* get_wasm_type(unsigned type);
 
+char* get_wasm_function_implicit_return(unsigned type);
+
 #endif

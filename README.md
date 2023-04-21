@@ -43,7 +43,7 @@ node program.js
     - increment
     - decrement
 
-- flow control - if/else
+- [x] flow control - if/else
 - loops while(maybe for(maybe combine them like in golang))
 - [x] print() function 
 - [x] functions
@@ -69,10 +69,9 @@ node program.js
 
 
 ### Types:
-- int
-- bool
-- float/double - ADVANCED
+- [x] int
+- [x] bool
+- float/double
 - string - ADVANCED
-- char - ADVANCED
 - array - ADVANCED
 - struct - ADVANCED

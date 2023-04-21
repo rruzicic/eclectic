@@ -143,7 +143,6 @@ function
       else {
         code("\n\t(func $%s", $2);
       }
-      
     }
     else {
       err("function %s already declared", $2);
@@ -151,6 +150,7 @@ function
   }
   LEFT_PAREN function_params RIGHT_PAREN function_return_type LEFT_CURLY statement_list RIGHT_CURLY
   {
+    code("\n\t%s", get_wasm_function_implicit_return(get_type(function_idx)));
     int func_param_num = get_func_param_num(function_idx);
     clear_symbols(function_idx + func_param_num + 1);
     code(")");
@@ -219,20 +219,41 @@ while_statement
   ;
 
 if_statement 
-  : if_part
-  | if_part ELSE LEFT_CURLY statement_list RIGHT_CURLY
-  | if_part ELSE if_statement
+  : if_part { code("\n\t)"); }
+  | if_part ELSE 
+  {
+    code("\n\t(else");  
+  } 
+  LEFT_CURLY statement_list RIGHT_CURLY
+  {
+    code("\n\t)"); 
+    code("\n\t)"); 
+  }
+  | if_part ELSE 
+  {
+    code("\n\t(else");  
+  }
+  if_statement 
+  { 
+    code("\n\t)"); 
+    code("\n\t)"); 
+  }
   ; 
 
 if_part
-  : IF expression LEFT_CURLY statement_list RIGHT_CURLY 
-  { 
+  : IF expression LEFT_CURLY 
+  {
     if ($2 != BOOL_TYPE) {
       err("if condition expression must be of type bool");
     }
     else {
-      // codegen
+      code("\n\t(if");
+      code("\n\t(then");  
     }
+  }
+  statement_list RIGHT_CURLY 
+  { 
+    code("\n\t)");
   }
   ;
 
